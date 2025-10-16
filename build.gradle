@@ -1,7 +1,8 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.5.6'
+    id 'java-library'
+    id 'maven-publish'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '3.5.6' apply false
 }
 
 group = 'org'
@@ -9,35 +10,95 @@ version = '1.0.0'
 description = 'spring-audit-aop-interceptor'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories { mavenCentral() }
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.6"
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    //spring core
-    implementation 'org.springframework.boot:spring-boot-starter'
+    // Public API for consumers
+    api 'org.springframework:spring-context'
+    api 'org.springframework:spring-aop'
+    implementation 'org.aspectj:aspectjweaver'
 
-    //aop
-    implementation 'org.springframework.boot:spring-boot-starter-aop'
-
-    //utils
+    // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
-
-    //test
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    testRuntimeOnly  'com.h2database:h2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testCompileOnly 'org.projectlombok:lombok:1.18.34'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    //Logging API
+    api 'org.slf4j:slf4j-api:2.0.16'
+
+    // Tests
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testRuntimeOnly 'com.h2database:h2'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+tasks.named('test') { useJUnitPlatform() }
+
+// ensure we publish a normal library jar
+tasks.register('bootJar') { enabled = false }
+tasks.named('jar') { enabled = true }
+tasks.withType(Jar).configureEach { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
+
+// Optional: module name in MANIFEST
+tasks.named('jar') {
+    manifest {
+        attributes('Automatic-Module-Name': 'org.auditaspect.interceptor')
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = 'org'
+            artifactId = 'spring-audit-aop-interceptor'
+            version = project.version
+
+            pom {
+                name = 'spring-audit-aop-interceptor'
+                description = 'Lightweight AOP-based audit interceptor for Spring/Spring Boot'
+                url = 'https://github.com/serzhe1/spring-audit-aop-interceptor'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'serzhe1'
+                        name = 'Sergei Ladygin'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/serzhe1/spring-audit-aop-interceptor'
+                    connection = 'scm:git:https://github.com/serzhe1/spring-audit-aop-interceptor.git'
+                    developerConnection = 'scm:git:ssh://git@github.com/serzhe1/spring-audit-aop-interceptor.git'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/serzhe1/spring-audit-aop-interceptor')
+            credentials {
+                username = findProperty('gpr.user') ?: System.getenv('GITHUB_ACTOR')
+                password = findProperty('gpr.key')  ?: System.getenv('GITHUB_GRADLE_PUBLISH_TOKEN')
+            }
+        }
+    }
 }
