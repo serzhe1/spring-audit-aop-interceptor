@@ -37,7 +37,7 @@ public class BaseAuditAspect {
         startLogOnDebug(Phase.BEFORE, key, handlers);
 
         long t0 = System.nanoTime();
-        handlers.forEach(name -> safeInvoke(name, () -> serviceMap.get(name).before(), Phase.BEFORE, key));
+        handlers.forEach(name -> safeInvoke(name, () -> serviceMap.get(name).before(jp), Phase.BEFORE, key));
         doneLogOnDebug(Phase.BEFORE, key, t0);
     }
     
@@ -51,7 +51,9 @@ public class BaseAuditAspect {
         startLogOnDebug(Phase.AFTER_RETURNING, key, handlers);
 
         long t0 = System.nanoTime();
-        handlers.forEach(name -> safeInvoke(name, () -> serviceMap.get(name).afterReturning(), Phase.AFTER_RETURNING, key));
+        handlers.forEach(name ->
+                safeInvoke(name, () -> serviceMap.get(name).afterReturning(jp, ret), Phase.AFTER_RETURNING, key)
+        );
         doneLogOnDebug(Phase.AFTER_RETURNING, key, t0);
     }
 
@@ -68,7 +70,7 @@ public class BaseAuditAspect {
         }
 
         long t0 = System.nanoTime();
-        handlers.forEach(name -> safeInvoke(name, () -> serviceMap.get(name).afterThrowing(), Phase.AFTER_THROWING, key));
+        handlers.forEach(name -> safeInvoke(name, () -> serviceMap.get(name).afterThrowing(jp, ex), Phase.AFTER_THROWING, key));
         if (log.isDebugEnabled()) {
             log.debug("audit phase={} done target={} totalDurationNs={} errClass={}",
                     Phase.AFTER_THROWING, key, System.nanoTime() - t0, ex.getClass().getSimpleName());

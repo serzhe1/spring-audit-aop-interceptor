@@ -1,10 +1,12 @@
 package org.auditaspect.core;
 
+import org.aspectj.lang.JoinPoint;
+
 public interface BaseAuditService {
 
-    void  before();
+    void  before(JoinPoint jp);
 
-    void  afterReturning();
+    void  afterReturning(JoinPoint jp, Object ret);
 
-    void  afterThrowing();
+    void  afterThrowing(JoinPoint jp, Throwable ex);
 }
