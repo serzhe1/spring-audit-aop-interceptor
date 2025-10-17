@@ -59,7 +59,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * @see org.auditaspect.core.BaseAuditService
  * @see org.auditaspect.core.BaseAuditAspect
  *
- * @since 0.1.0
+ * @since 1.0.0
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RUNTIME)

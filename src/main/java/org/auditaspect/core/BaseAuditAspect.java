@@ -37,8 +37,8 @@ import java.util.*;
  * }
  * }</pre>
  *
- * @author Alex
- * @since 0.1.0
+ * @author serzhe1
+ * @since 1.0.0
  */
 @Aspect
 @Slf4j
@@ -76,7 +76,7 @@ public class BaseAuditAspect {
     @Before("auditablePointcut()")
     void onBefore(JoinPoint jp) {
         String key = methodKey(jp);
-        List<String> handlers = resolveHandlerNames(jp);
+        Collection<String> handlers = resolveHandlerNames(jp);
 
         if (isEmptyHandlers(handlers, key)) return;
 
@@ -97,7 +97,7 @@ public class BaseAuditAspect {
     @AfterReturning(pointcut = "auditablePointcut()", returning = "ret")
     void onAfterReturning(JoinPoint jp, Object ret) {
         String key = methodKey(jp);
-        List<String> handlers = resolveHandlerNames(jp);
+        Collection<String> handlers = resolveHandlerNames(jp);
 
         if (isEmptyHandlers(handlers, key)) return;
 
@@ -120,7 +120,7 @@ public class BaseAuditAspect {
     @AfterThrowing(pointcut = "auditablePointcut()", throwing = "ex")
     void onAfterThrowing(JoinPoint jp, Throwable ex) {
         String key = methodKey(jp);
-        List<String> handlers = resolveHandlerNames(jp);
+        Collection<String> handlers = resolveHandlerNames(jp);
 
         if (isEmptyHandlers(handlers, key)) return;
 
@@ -152,7 +152,7 @@ public class BaseAuditAspect {
      * @param jp the current join point
      * @return a list of bean names of {@link BaseAuditService} to invoke
      */
-    private List<String> resolveHandlerNames(JoinPoint jp) {
+    private Collection<String> resolveHandlerNames(JoinPoint jp) {
         MethodSignature sig = (MethodSignature) jp.getSignature();
         Method method = sig.getMethod();
         Class<?> targetClass = jp.getTarget() != null
@@ -163,7 +163,7 @@ public class BaseAuditAspect {
         Auditable mAnn = AnnotatedElementUtils.findMergedAnnotation(specific, Auditable.class);
         Auditable cAnn = AnnotatedElementUtils.findMergedAnnotation(targetClass, Auditable.class);
 
-        List<String> names = new ArrayList<>();
+        Set<String> names = new HashSet<>();
         if (mAnn != null && mAnn.handlers().length > 0) {
             names.addAll(Arrays.asList(mAnn.handlers()));
         } else if (cAnn != null && cAnn.handlers().length > 0) {
@@ -226,7 +226,7 @@ public class BaseAuditAspect {
      * @param key      the intercepted method identifier
      * @return {@code true} if no handlers are defined, {@code false} otherwise
      */
-    private boolean isEmptyHandlers(List<String> handlers, String key) {
+    private boolean isEmptyHandlers(Collection<String> handlers, String key) {
         if (handlers.isEmpty()) {
             log.debug("audit phase={} skipped: no handlers target={}", Phase.BEFORE, key);
             return true;
@@ -241,7 +241,7 @@ public class BaseAuditAspect {
      * @param key      the intercepted method identifier
      * @param handlers list of handler bean names
      */
-    private void startLogOnDebug(Phase phase, String key, List<String> handlers) {
+    private void startLogOnDebug(Phase phase, String key, Collection<String> handlers) {
         if (log.isDebugEnabled()) {
             log.debug("audit phase={} start target={} handlersCount={} handlers={}",
                     phase, key, handlers.size(), handlers);
